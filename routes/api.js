@@ -41,6 +41,21 @@ router.post('/login', async (req, res, next) => {
 
     try {
         const foundUser = await client.query(`SELECT * FROM users WHERE username='${username}' LIMIT 1;`);
+
+        if (foundUser.rows.length === 0) {
+            return res.json({
+                lockStatus: "🔓",
+                message: 'No account found with that username',
+            });
+        }
+
+        const hashedPassword = await bcrypt.compare(
+            password, foundUser.rows[0].password
+        );
+
+        console.log(hashedPassword);
+
+
         return res.json({
             lockStatus: "🔓",
             message: foundUser.rows,
