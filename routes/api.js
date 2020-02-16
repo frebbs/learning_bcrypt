@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const SECRET = "Lets934ieslfidshk4-dsgp94euihrdssle";
 const cors = require('cors');
 const { client, pool } = require('../db/db_config');
-
+const jwt = require("jsonwebtoken");
 router.get('/', async (req, res, next) => {
 
     try {
@@ -53,17 +53,28 @@ router.post('/login', async (req, res, next) => {
             password, foundUser.rows[0].password
         );
 
-        if (hashedPassword === 0) {
-            return res.json({
-                lockStatus: "🔐",
-                message: 'Passwords Match!'
+        console.log(hashedPassword);
+        if (hashedPassword === true) {
+
+            const JWT = jwt.sign({
+                username: foundUser.rows[0].username
+            },
+                SECRET, {
+                expiresIn: 60 * 60
             });
+        return res.json({
+            lockStatus: "🔐",
+            message: 'Passwords Match!',
+            JWT
+        });
+
         } else {
             return res.json({
                 lockStatus: "✋🏽",
                 message: 'Passwords did NOT Match!'
             });
         }
+
 
 
     } catch (error) {
