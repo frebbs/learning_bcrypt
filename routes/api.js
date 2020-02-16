@@ -53,7 +53,7 @@ router.post('/login', async (req, res, next) => {
             password, foundUser.rows[0].password
         );
 
-        if (hashedPassword) {
+        if (hashedPassword === 0) {
             return res.json({
                 lockStatus: "🔐",
                 message: 'Passwords Match!'
