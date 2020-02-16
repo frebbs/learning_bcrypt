@@ -20,7 +20,7 @@ router.post('/adduser', async(req, res,next) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const result = await client.query(`INSERT INTO users (username, password, email) VALUES ('${username}', '${hashedPassword}', '${email}');`);
+        await client.query(`INSERT INTO users (username, password, email) VALUES ('${username}', '${hashedPassword}', '${email}');`);
         return res.json({
             lockStatus: '🔑',
             message: "User Saved",
@@ -53,14 +53,19 @@ router.post('/login', async (req, res, next) => {
             password, foundUser.rows[0].password
         );
 
-        console.log(hashedPassword);
+        if (hashedPassword) {
+            return res.json({
+                lockStatus: "🔐",
+                message: 'Passwords Match!'
+            });
+        } else {
+            return res.json({
+                lockStatus: "✋🏽",
+                message: 'Passwords did NOT Match!'
+            });
+        }
 
 
-        return res.json({
-            lockStatus: "🔓",
-            message: foundUser.rows,
-
-        });
     } catch (error) {
         return res.json({
             lockStatus: "😭",
