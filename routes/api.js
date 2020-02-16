@@ -20,21 +20,39 @@ router.post('/adduser', async(req, res,next) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const result = await client.query(`INSERT INTO users (username, password, email) VALUES ('${username}', '${hashedPassword}', '${email}') RETURNING *;`);
+        const result = await client.query(`INSERT INTO users (username, password, email) VALUES ('${username}', '${hashedPassword}', '${email}');`);
         return res.json({
             lockStatus: '🔑',
             message: "User Saved",
-            userDetails: result.rows[0]
         })
     } catch (error) {
-        return next(error)
+        return res.json({
+            lockStatus: "😭",
+            message: "User NOT Saved",
+            error
+        });
+
     }
 });
 
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res, next) => {
+    const {username, password} = req.body;
 
-    const {email, password} = req.body;
+    try {
+        const foundUser = await client.query(`SELECT * FROM users WHERE username='${username}' LIMIT 1;`);
+        return res.json({
+            lockStatus: "🔓",
+            message: foundUser.rows,
+
+        });
+    } catch (error) {
+        return res.json({
+            lockStatus: "😭",
+            message: "An Error?",
+            error
+        });
+    }
 
 
 });
