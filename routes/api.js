@@ -7,20 +7,20 @@ const { client, pool } = require('../db/db_config');
 const jwt = require("jsonwebtoken");
 
 
-router.post('/', verifyToken , async (req, res, next) => {
+router.post('/' , async (req, res, next) => {
     const result = await pool.query('SELECT * FROM users');
-
-    jwt.verify(req.token, SECRET, (err, authData) => {
+    jwt.verify(req.cookies.access_token, SECRET, (err, authData) => {
         if (err) {
             res.json ({
                 statusLock: '✋🏽',
-                message: 'You are not authorised to access this resource'
+                message: 'You are not authorised to access this resource',
+                err
             })
         } else {
             try {
                 return res.json({
                     statusLock: '🔐',
-                    data: result
+                    data: result.rows
                 });
             } catch (error) {
                 return next(error)
@@ -28,8 +28,6 @@ router.post('/', verifyToken , async (req, res, next) => {
         }
 
     })
-
-
 });
 
 router.post('/adduser', async (req, res,next) => {
@@ -51,11 +49,29 @@ router.post('/adduser', async (req, res,next) => {
     }
 });
 
+router.post('/edituser', async (req, res,next) => {
+     const { username } = req.body;
+    console.log(username);
+     if (req.cookies.access_token) {
+         const loggedIn = jwt.verify(req.cookies.access_token, SECRET);
+         try {
+             res.json({
+                 message: `Changed username to ${username}`
+             })
+         } catch (error) {
+             res.json({
+                 error
+             })
+         }
 
+
+     }
+});
 
 
 router.post('/login', async (req, res, next) => {
     const {username, password} = req.body;
+    console.log(req.body);
 
     try {
         const foundUser = await client.query(`SELECT * FROM users WHERE username='${username}' LIMIT 1;`);
@@ -79,12 +95,11 @@ router.post('/login', async (req, res, next) => {
                 SECRET, {
                 expiresIn: 60 * 60
             });
-        return res.json({
-            lockStatus: "🔐",
-            message: 'Passwords Match!',
-            JWT
+        res.cookie('access_token',  JWT, {
+            httpOnly: false
         });
 
+        return res.redirect('/members/home')
         } else {
             return res.json({
                 lockStatus: "✋🏽",
@@ -99,19 +114,6 @@ router.post('/login', async (req, res, next) => {
         });
     }
 });
-
-function verifyToken(req, res, next) {
-    const bearerHeader = req.headers['authorization'];
-
-    if (typeof bearerHeader !== "undefined") {
-        const bearer = bearerHeader.split(' ');
-        const bearerToken = bearer[1];
-        req.token = bearerToken;
-        next();
-    } else {
-        res.sendStatus(403);
-    }
-}
 
 
 
